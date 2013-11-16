@@ -299,14 +299,18 @@ encode_contents([], Response) when is_list(Response) ->
 encode_contents([], Response) ->
     {error, Response};    
 encode_contents([{MD, V} | Contents], Response) ->   
-    case is_allowed_content_type(MD) or is_deleted(MD) of
-        true ->
+    case {is_allowed_content_type(MD), is_deleted(MD)} of
+        {true, false} ->
             MDL = dict:to_list(MD),
             HL = encode_headers(MDL, []),
             JV = mochijson2:decode(V),
             C = [{<<"value">>, JV} | HL],
             encode_contents(Contents, [{struct, C} | Response]);
-        false ->
+        {_, true} ->
+            MDL = dict:to_list(MD),
+            HL = encode_headers(MDL, []),
+            encode_contents(Contents, [{struct, HL} | Response]);
+        {false, false} ->
             encode_contents([], non_json_contant_type)
     end.
 
@@ -321,6 +325,12 @@ encode_headers([{<<"content-type">>, CT} | Rest], EncodedHeaderList) ->
     encode_headers(Rest, [{<<"content-type">>, list_to_binary(CT)} | EncodedHeaderList]);
 encode_headers([{<<"encoding">>, Encoding} | Rest], EncodedHeaderList) ->
     encode_headers(Rest, [{<<"encoding">>, Encoding} | EncodedHeaderList]);
+encode_headers([{<<"X-Riak-Deleted">>} | Rest], EncodedHeaderList) ->
+    encode_headers(Rest, [{<<"deleted">>, <<"true">>} | EncodedHeaderList]);
+encode_headers([{<<"X-Riak-Deleted">>, _} | Rest], EncodedHeaderList) ->
+    encode_headers(Rest, [{<<"deleted">>, <<"true">>} | EncodedHeaderList]);
+encode_headers([{<<"index">>, []} | Rest], EncodedHeaderList) ->
+    encode_headers(Rest, EncodedHeaderList);
 encode_headers([{<<"index">>, IndexList} | Rest], EncodedHeaderList) ->
     Fun1 = fun({K,V}, Dict) ->
               case dict:find(K, Dict) of
