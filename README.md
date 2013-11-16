@@ -7,7 +7,7 @@ The MapReduce library `json_multiget` contains two Erlang MapReduce functions, `
 
 The Map phase function `map_json_multiget` will encode any object passed into it that have a valid JSON value and return an error encoded in JSON if the object could not be found or was not recognized as valid JSON. This function will follow the normal MapReduce limitations in that it does not perform a quorum read and do not cause read-repair to occur. Results can however be streamed back to the client which makes it quite efficient.
 
-The reduce phase function `reduce_json_multiget` on the other hand will take a list of keys to retrieve as an argument and will manage concurrent retrieval using the internal Riak client. Normal consistency parameters like `R` and `PR` can be supplied as part of the configuration and this function will perform a 'proper' quorum read that will trigger read repair. This reduce phase function will perform the retrieval of all configured keys in one go, and should therefore only be triggered once.
+The reduce phase function `reduce_json_multiget` on the other hand will take a list of keys to retrieve as an argument and will manage concurrent retrieval using the internal Riak client. Normal consistency parameters like `R` and `PR` can be supplied as part of the configuration and this function will perform a quorum read that will trigger read repair. This reduce phase function will perform the retrieval of all configured keys in one go, and should therefore only be triggered once.
 
 ##Installation
 Check out and compile the module as shown below.
